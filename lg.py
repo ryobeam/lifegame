@@ -5,7 +5,7 @@ import csv
 import pygame
 from pygame.locals import *
 
-# CELL変数
+# CELL 定数
 WIDTH = 100
 HEIGHT = 100
 SIZE = 10
@@ -20,21 +20,24 @@ COLOR_CELL_DEAD = (100,0,0)
 COLOR_CELL_STAR = (255,255,255)
 RUN_WAIT = 100
 
-# PANEL変数
+# PANEL 定数
 PANEL_X = TX
 PANEL_Y = HEIGHT * SIZE + 5 + TY
 PANEL_HEIGHT = 30
 PANEL_WIDTH = WIDTH * SIZE
 
-#
+# セルの集合
 cell  = [[0 for i in range(WIDTH)] for j in range(HEIGHT)] # フィールド
 cell_old  = [[0 for i in range(WIDTH)] for j in range(HEIGHT)] # ひとつ前のフィールド 
+
+# その他グローバル変数
 screen = None # pygame screen
 
-gen = 1
-live = 0
-live_old = 0
+gen = 1 # 世代
+live = 0 # 生存セル数
+live_old = 0 # 前回の生存セル数
 
+# リスタート時のグローバル変数の初期化
 def restart():
     global gen, live, live_old
 
@@ -42,6 +45,7 @@ def restart():
     live = count_live()
     live_old = live
 
+# 生存しているセルを数える
 def count_live():
     live = 0
     for y in range(HEIGHT):
@@ -50,6 +54,7 @@ def count_live():
                 live += 1
     return live
 
+# 次世代の計算
 def next():
     global cell, cell_old
     global gen, live, live_old
@@ -90,6 +95,7 @@ def next():
     live_old = live
     live = count_live()
 
+# ランダムな初期状態の設定
 def set_cell_random():
     global cell, cell_old
 
@@ -115,6 +121,7 @@ def set_cell_random():
         writer = csv.writer(f, lineterminator='\n')
         writer.writerows(cell)   
 
+# 固定された初期状態の設定
 def set_cell_p2():
     global cell, cell_old
 
@@ -150,6 +157,8 @@ def set_cell_p2():
 #
 # GUI
 #
+
+# pygame の初期化
 def init_screen():
     pygame.init()
     pygame.display.set_caption("lifegame")
@@ -159,7 +168,8 @@ def init_screen():
 
     return screen
 
-def draw(offset_x, offset_y):
+# 描画 offset:描画位置オフセット
+def draw(offset_x=0, offset_y=0):
     def _pos(x, y):
         return _pos_x(x), _pos_y(y)
 
@@ -197,6 +207,7 @@ def draw(offset_x, offset_y):
     draw_panel()
     pygame.display.update()
 
+# パネル（最下段）の描画
 def draw_panel():
     global gen, live
 
@@ -220,14 +231,13 @@ def draw_panel():
 #
 def main():
     global screen, live
-    ##is_run = False
     step = 0 # step の数だけ更新 0の時は停止
-    dy = 0
+    dy = 0 # Y 描画位置 offset
 
     screen = init_screen()
     set_cell_random()
     restart()
-    draw(0,0)
+    draw()
 
     while True:
         if step == 0:
@@ -238,16 +248,25 @@ def main():
 
         if is_run:
             next()
+            draw()
 
-            draw(0, 0)
-            dy += 1
-            if dy >= HEIGHT:
-                dy = 0
+            #dy += 1
+            #if dy >= HEIGHT:
+            #    dy = 0
 
+        # pygame イベント処理
+        # キー入力、終了
         for event in pygame.event.get():
+            # 終了(ウインドウクローズ)
             if event.type == QUIT:
                 pygame.quit()
                 sys.exit()
+            # キー入力処理
+            # ESC  :終了
+            # SPACE:更新 / 停止
+            # → ↓  :1世代実行
+            # 1    :リスタート(ランダム)
+            # 2    :リスタート(固定サンプル)
             if event.type == KEYDOWN:
                 if event.key == K_ESCAPE:
                     pygame.quit()
