@@ -1,5 +1,5 @@
 # lifegame
-lifegame for windows
+lifegame for pygame
 
 # usage
 ## キー操作
