@@ -1,5 +1,7 @@
 # lifegame
 lifegame for pygame
+![Image 1]("images/randam.png")
+![Image 2]("images/sample.png")
 
 # usage
 ## キー操作
