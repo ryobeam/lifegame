@@ -292,6 +292,6 @@ def main():
 
         pygame.time.wait(RUN_WAIT)
 
-###
+#####
 if __name__ == '__main__':
     main()
