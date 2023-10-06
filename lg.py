@@ -28,7 +28,7 @@ PANEL_WIDTH = WIDTH * SIZE
 
 # セルの集合
 cell  = [[0 for i in range(WIDTH)] for j in range(HEIGHT)] # フィールド
-cell_old  = [[0 for i in range(WIDTH)] for j in range(HEIGHT)] # ひとつ前のフィールド 
+cell_old  = [[0 for i in range(WIDTH)] for j in range(HEIGHT)] # ひとつ前のフィールド
 
 # その他グローバル変数
 screen = None # pygame screen
@@ -87,7 +87,7 @@ def next():
             else:
                 if p == 2 or p == 3: # キープ
                     cell_next[y][x] = 1
-    
+
     cell_old = cell # ひとつ前のフィールドを保存
     cell = cell_next # 現在のフィールドを更新
 
@@ -106,7 +106,7 @@ def set_cell_random():
                 cell[y][x] = 1
             else:
                 cell[y][x] = 0
-    
+
     cell_old = cell
 
     #with open('a.txt', 'w') as f:
@@ -116,10 +116,10 @@ def set_cell_random():
     #            s += f'{cell[y][x]},'
     #        f.write(s[:-1])
 
-    # 初期状態をファイルへ出力          
+    # 初期状態をファイルへ出力
     with open('data.csv', 'w') as f:
         writer = csv.writer(f, lineterminator='\n')
-        writer.writerows(cell)   
+        writer.writerows(cell)
 
 # 固定された初期状態の設定
 def set_cell_p2():
@@ -153,6 +153,20 @@ def set_cell_p2():
     vline(84, 0, 100)
 
     cell_old = cell
+
+#
+# Data File Read
+#
+
+def read_data(filepath):
+    with open(filepath) as f:
+        reader = csv.reader(f)
+        cell_str = [row for row in reader]
+
+    # int に変換
+    cell_int = [[int(x) for x in y] for y in cell_str]
+
+    return cell_int
 
 #
 # GUI
@@ -213,7 +227,7 @@ def draw_panel():
 
     def _print(x, y, text):
         screen.blit(text, (PANEL_X + x,PANEL_Y + y))
-        
+
     pygame.draw.rect(screen, (0,50,0), (PANEL_X, PANEL_Y, PANEL_WIDTH, PANEL_HEIGHT))
 
     font = pygame.font.SysFont(None, 30)
@@ -221,7 +235,7 @@ def draw_panel():
     text1 = font.render('LIFEGAME', True, (200,200,200))
     text2 = font.render(f'Generation {gen:,}', True, (200,200,200))
     text3 = font.render(f'Live {live:,} ({(live_old - live):+,})', True, (200,200,200))
-    
+
     _print(6,6,text1)
     _print(200,6,text2)
     _print(400,6,text3)
@@ -230,12 +244,21 @@ def draw_panel():
 # Main Loop
 #
 def main():
-    global screen, live
+    global cell, cell_old, screen, live
+
     step = 0 # step の数だけ更新 0の時は停止
     dy = 0 # Y 描画位置 offset
+    isscroll = False
 
     screen = init_screen()
+
     set_cell_random()
+    if len(sys.argv) == 2:
+        data_file_path = sys.argv[1]
+        cell = read_data(data_file_path)
+        cell_old = cell
+        print(f'Read Data : {data_file_path}',cell[0])
+
     restart()
     draw()
 
@@ -246,13 +269,15 @@ def main():
             is_run = True
             step -= 1
 
-        if is_run:
+        if is_run: # 更新
             next()
-            draw()
-
-            #dy += 1
-            #if dy >= HEIGHT:
-            #    dy = 0
+            draw(offset_y=dy)
+            # スクロール処理
+            if isscroll:
+                draw(0, dy)
+                dy += 1
+                if dy >= HEIGHT:
+                    dy = 0
 
         # pygame イベント処理
         # キー入力、終了
@@ -264,7 +289,8 @@ def main():
             # キー入力処理
             # ESC  :終了
             # SPACE:更新 / 停止
-            # → ↓  :1世代実行
+            # →    :1世代実行
+            # ↓    :スクロールモード on / off
             # 1    :リスタート(ランダム)
             # 2    :リスタート(固定サンプル)
             if event.type == KEYDOWN:
@@ -276,9 +302,10 @@ def main():
                         step = 0
                     else:
                         step = 10000
-                    ## is_run = not is_run
-                elif event.key == K_RIGHT or event.key == K_DOWN:
+                elif event.key == K_RIGHT:
                     step = 1
+                elif event.key == K_DOWN:
+                    isscroll = not isscroll
                 elif event.key == K_1:
                     step = 0
                     set_cell_random()
